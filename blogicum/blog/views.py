@@ -49,8 +49,7 @@ class PostsListView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        category = self.request.GET.get('category')
-        queryset = get_published_posts(category)
+        queryset = get_published_posts()
         queryset = queryset.annotate(comment_count=Count('comments'))
         queryset = queryset.order_by('-pub_date')
         return queryset
