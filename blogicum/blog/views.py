@@ -145,11 +145,15 @@ class PostDetailView(DetailView):
     pk_url_kwarg = 'post_id'
 
     def get_object(self, queryset=None):
+        now = timezone.now()
         post_id = self.kwargs['post_id']
         post = get_object_or_404(Post, pk=post_id)
-        if not post.is_published or not post.category.is_published:
+
+        if not (post.is_published and post.category.is_published
+                and post.pub_date <= now):
             if post.author != self.request.user:
                 raise Http404("Страница не найдена")
+
         return post
 
     def get_context_data(self, **kwargs):
