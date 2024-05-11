@@ -34,11 +34,11 @@ def get_published_posts(category=None, user=None):
     if category:
         queryset = queryset.filter(category=category)
 
-    if user and user.is_authenticated:
-        if not user.is_staff and not user.is_superuser:
-            queryset = queryset.filter(author=user)
+    if user:
+        queryset = queryset.filter(author=user)
     else:
-        queryset = queryset.filter(is_published=True, pub_date__lte=now)
+        queryset = queryset.filter(
+            is_published=True, pub_date__lte=now, category__is_published=True)
 
     return queryset
 
@@ -84,15 +84,15 @@ class UserProfileView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        profile_user = self.get_object()
+
+        author_user = self.get_object()
         user = self.request.user
 
-        if profile_user == user:
-            posts = get_published_posts(user=user).filter(
-                author=profile_user).order_by('-pub_date')
+        if author_user == user:
+            posts = get_published_posts(user=user).order_by('-pub_date')
         else:
-            posts = (get_published_posts().filter
-                     (author=profile_user).order_by('-pub_date'))
+            posts = (get_published_posts().filter(
+                author=author_user).order_by('-pub_date'))
 
         posts_with_comment_count = posts.annotate(
             comment_count=Count('comments'))
@@ -142,12 +142,14 @@ class EditPostView(OnlyAuthorMixin, UpdateView):
 class PostDetailView(DetailView):
     model = Post
     template_name = 'blog/detail.html'
+    pk_url_kwarg = 'post_id'
 
     def get_object(self, queryset=None):
         post_id = self.kwargs['post_id']
         post = get_object_or_404(Post, pk=post_id)
-        if not post.is_published and post.author != self.request.user:
-            raise Http404("Страница не найдена")
+        if not post.is_published or not post.category.is_published:
+            if post.author != self.request.user:
+                raise Http404("Страница не найдена")
         return post
 
     def get_context_data(self, **kwargs):
