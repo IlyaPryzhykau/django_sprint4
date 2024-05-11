@@ -146,7 +146,7 @@ class PostDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         post = self.object  # Получаем объект поста
-        comments = post.comments.all().order_by('-created_at')  # Получаем все комментарии для данной публикации
+        comments = post.comments.all().order_by('created_at')  # Получаем все комментарии для данной публикации
         context['comments'] = comments
         context['form'] = CommentForm()  # Создаем новый объект формы комментария
         return context
@@ -172,17 +172,17 @@ class CategoryPostsView(ListView):
             slug=self.kwargs['category_slug'],
             is_published=True
         )
-        user = self.request.user
         queryset = get_published_posts(category=self.category).order_by('-pub_date')
         queryset = queryset.annotate(comment_count=Count('comments'))
         return queryset
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['category'] = self.category
         return context
 
 
-class CommentCreateView(CreateView):
+class CommentCreateView(LoginRequiredMixin, CreateView):
     model = Comment
     form_class = CommentForm
 
@@ -202,9 +202,25 @@ class CommentEditView(LoginRequiredMixin, UpdateView):
     pk_url_kwarg = 'comment_id'
     template_name = 'blog/comment.html'
 
+    def get_object(self, queryset=None):
+        # Получаем объект комментария
+        comment_id = self.kwargs['comment_id']
+        comment = get_object_or_404(Comment, pk=comment_id)
+        return comment
+
+    def dispatch(self, request, *args, **kwargs):
+        # Проверяем, что текущий пользователь является автором комментария
+        comment = self.get_object()
+        if comment.author != self.request.user:
+            # Если пользователь не автор комментария, перенаправляем его или отказываем в доступе
+            # Например, можно перенаправить на страницу деталей поста или главную страницу
+            return redirect('blog:post_detail', post_id=comment.post.pk)
+        return super().dispatch(request, *args, **kwargs)
+
     def get_success_url(self):
-        post_id = self.object.post.id
-        return reverse('blog:post_detail', kwargs={'post_id': post_id})
+        # После успешного редактирования комментария перенаправляем обратно на страницу деталей поста
+        comment = self.object
+        return reverse('blog:post_detail', kwargs={'post_id': comment.post.pk})
 
 
 class CommentDeleteView(OnlyAuthorMixin, DeleteView):
