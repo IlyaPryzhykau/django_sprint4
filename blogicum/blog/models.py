@@ -77,7 +77,6 @@ class Post(PublishedModel):
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
-        ordering = ('-pub_date',)
 
     def __str__(self):
         return self.title
@@ -89,10 +88,12 @@ class Comment(PublishedModel):
         Post,
         on_delete=models.CASCADE,
         related_name='comments',
+        verbose_name='Комментарий'
     )
     author = models.ForeignKey(
         User,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        verbose_name='Автор'
     )
 
     class Meta:
