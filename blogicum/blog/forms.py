@@ -8,8 +8,8 @@ from .models import (Comment,
 
 def validate_content_forbidden_words(value):
     forbidden_words = set(ForbiddenWord.objects.values_list('word', flat=True))
-    for word in forbidden_words:
-        if word.lower() in value.lower():
+    for word in value.split():
+        if word.lower() in forbidden_words:
             raise forms.ValidationError(f"{word} - запрещенное слово!")
 
 
@@ -35,7 +35,7 @@ class PostForm(forms.ModelForm):
 
     class Meta:
         model = Post
-        fields = ['title', 'text', 'image', 'location', 'category', 'pub_date']
+        fields = ('title', 'text', 'image', 'location', 'category', 'pub_date')
         widgets = {
             'pub_date': forms.DateTimeInput(
                 format='%Y-%m-%dT%H:%M',  # Формат для datetime-local

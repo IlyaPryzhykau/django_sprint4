@@ -18,10 +18,9 @@ from .forms import (PostForm,
                     CommentForm)
 from .models import (Category,
                      Comment,
-                     Post)
+                     Post,
+                     SORT_ORDER)
 
-
-SORT_ORDER = '-pub_date'
 
 User = get_user_model()
 
@@ -93,15 +92,14 @@ class UserProfileView(ListView):
     def get_queryset(self):
         user = get_object_or_404(User, username=self.kwargs['username'])
         if user == self.request.user:
-            queryset = (get_published_posts(user=user)
-                        .annotate(comment_count=Count('comments'))
-                        .order_by(SORT_ORDER))
-        else:
-            queryset = (get_published_posts()
-                        .filter(author=user)
-                        .annotate(comment_count=Count('comments'))
-                        .order_by(SORT_ORDER))
-        return queryset
+            return (get_published_posts(user=user)
+                    .annotate(comment_count=Count('comments'))
+                    .order_by(SORT_ORDER))
+
+        return (get_published_posts()
+                .filter(author=user)
+                .annotate(comment_count=Count('comments'))
+                .order_by(SORT_ORDER))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

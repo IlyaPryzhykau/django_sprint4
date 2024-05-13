@@ -4,6 +4,8 @@ from django.contrib.auth import get_user_model
 from core.models import PublishedModel
 
 
+SORT_ORDER = '-pub_date'
+
 User = get_user_model()
 
 
@@ -77,6 +79,7 @@ class Post(PublishedModel):
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
+        ordering = (SORT_ORDER,)
 
     def __str__(self):
         return self.title
@@ -102,11 +105,15 @@ class Comment(PublishedModel):
         ordering = ('-created_at',)
 
     def __str__(self):
-        return self.post
+        return f'Коментарий {self.author.username} в посте {self.post.title}'
 
 
 class ForbiddenWord(models.Model):
-    word = models.CharField(max_length=25, unique=True)
+    word = models.CharField(
+        'Запрещенное слово',
+        max_length=25,
+        unique=True
+    )
 
     class Meta:
         verbose_name = "Запрещенное слово"
