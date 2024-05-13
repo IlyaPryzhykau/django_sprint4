@@ -103,3 +103,14 @@ class Comment(PublishedModel):
 
     def __str__(self):
         return self.post
+
+
+class ForbiddenWord(models.Model):
+    word = models.CharField(max_length=25, unique=True)
+
+    class Meta:
+        verbose_name = "Запрещенное слово"
+        verbose_name_plural = "Запрещенные слова"
+
+    def __str__(self):
+        return self.word

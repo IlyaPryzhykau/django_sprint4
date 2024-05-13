@@ -2,7 +2,15 @@ from django import forms
 from django.utils import timezone
 
 from .models import (Comment,
+                     ForbiddenWord,
                      Post)
+
+
+def validate_content_forbidden_words(value):
+    forbidden_words = set(ForbiddenWord.objects.values_list('word', flat=True))
+    for word in forbidden_words:
+        if word.lower() in value.lower():
+            raise forms.ValidationError("Обнаружено запрещенное слово в тексте")
 
 
 class PostForm(forms.ModelForm):
@@ -12,6 +20,18 @@ class PostForm(forms.ModelForm):
         # Установка начального значения для поля pub_date
         self.fields['pub_date'].initial = timezone.localtime(
             timezone.now()).strftime('%Y-%m-%dT%H:%M')
+
+    def clean_title(self):
+        text = self.cleaned_data.get('title')
+        if text:
+            validate_content_forbidden_words(self.cleaned_data.get('title'))
+        return text
+
+    def clean_text(self):
+        text = self.cleaned_data.get('text')
+        if text:
+            validate_content_forbidden_words(self.cleaned_data.get('text'))
+        return text
 
     class Meta:
         model = Post
@@ -25,6 +45,12 @@ class PostForm(forms.ModelForm):
 
 
 class CommentForm(forms.ModelForm):
+
+    def clean_text(self):
+        text = self.cleaned_data.get('text')
+        if text:
+            validate_content_forbidden_words(self.cleaned_data.get('text'))
+        return text
 
     class Meta:
         model = Comment
