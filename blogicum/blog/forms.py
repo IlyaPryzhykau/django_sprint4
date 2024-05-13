@@ -10,7 +10,7 @@ def validate_content_forbidden_words(value):
     forbidden_words = set(ForbiddenWord.objects.values_list('word', flat=True))
     for word in forbidden_words:
         if word.lower() in value.lower():
-            raise forms.ValidationError("Обнаружено запрещенное слово в тексте")
+            raise forms.ValidationError(f"{word} - запрещенное слово!")
 
 
 class PostForm(forms.ModelForm):
